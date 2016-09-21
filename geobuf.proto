@@ -1,5 +1,5 @@
 syntax = "proto2";
-package ch.doplab.spatial.geobuf;
+package sysmic.protobuf;
 
 option optimize_for = LITE_RUNTIME;
 
