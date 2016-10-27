@@ -3,7 +3,7 @@ package sysmic.geometry
 /**
   * Utility functions for geometries.
   */
-object GeometryUtil {
+object SpatialDataUtil {
 
   def bboxContains(bbox:BBox, p:Point):Boolean = {
     bbox.p1.x <= p.x &&
@@ -36,12 +36,10 @@ object GeometryUtil {
     Point(points.map(_.x).sum / points.length, points.map(_.y).sum / points.length)
   }
 
-  /**
-    * Compute the bounding box of a list of points.
-    *
-    * @param points
-    * @return
-    */
+  def pointBBox(point:Point):BBox = {
+    BBox(point, point)
+  }
+  
   def pointsBBox(points:List[Point]):BBox = {
     val xMin = points.map(_.x).min
     val xMax = points.map(_.x).max
@@ -50,10 +48,13 @@ object GeometryUtil {
     BBox(Point(xMin, yMin), Point(xMax, yMax))
   }
 
-  def pointBBox(point:Point):BBox = {
-    BBox(point, point)
+  def spatialDataBBox(data:List[SpatialData]):BBox = {
+    val points = data.map(_.bbox()).flatMap(b => List(b.p1, b.p2))
+    pointsBBox(points)
   }
 
+  
+  
   def polygonContains(polygon: Polygon, point:Point):Boolean = {
     // http://stackoverflow.com/questions/217578/how-can-i-determine-whether-a-2d-point-is-within-a-polygon
     // https://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html#Explanation

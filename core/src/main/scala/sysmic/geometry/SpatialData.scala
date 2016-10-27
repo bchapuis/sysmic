@@ -18,7 +18,11 @@ package sysmic.geometry
 /**
   * A base trait for spatial data.
   */
-trait SpatialData
+trait SpatialData {
+
+  def bbox():BBox
+
+}
 
 /**
   * A base trait for geometries.
@@ -32,7 +36,9 @@ trait Geometry extends SpatialData
   * @param x
   * @param y
   */
-case class Point(x:Double, y:Double) extends Geometry
+case class Point(x:Double, y:Double) extends Geometry {
+  override def bbox(): BBox = BBox(this, this)
+}
 
 
 /**
@@ -40,42 +46,55 @@ case class Point(x:Double, y:Double) extends Geometry
   *
   * @param points
   */
-case class MultiPoint(points:List[Point]) extends Geometry
+case class MultiPoint(points:List[Point]) extends Geometry {
+  override def bbox(): BBox = SpatialDataUtil.pointsBBox(points)
+}
 
 /**
   * A two dimensional line.
   *
   * @param points
   */
-case class LineString(points:List[Point]) extends Geometry
+case class LineString(points:List[Point]) extends Geometry {
+  override def bbox(): BBox = SpatialDataUtil.pointsBBox(points)
+}
 
 /**
   * A list of two dimensional lines.
   *
   * @param lines
   */
-case class MultiLineString(lines:List[LineString]) extends Geometry
+case class MultiLineString(lines:List[LineString]) extends Geometry {
+  override def bbox(): BBox = SpatialDataUtil.spatialDataBBox(lines)
+}
 
 /**
   * A two dimensional polygon.
   *
   * @param points
   */
-case class Polygon(points:List[Point]) extends Geometry
+case class Polygon(points:List[Point]) extends Geometry {
+  override def bbox(): BBox = SpatialDataUtil.pointsBBox(points)
+}
 
 /**
   * A list of two dimensional polygons.
   *
   * @param polygons
   */
-case class MultiPolygon(polygons:List[Polygon]) extends Geometry
+case class MultiPolygon(polygons:List[Polygon]) extends Geometry {
+  override def bbox(): BBox = SpatialDataUtil.spatialDataBBox(polygons)
+}
+
 
 /**
   * A collection of geometries.
   *
   * @param geometries
   */
-case class GeometryCollection(geometries:List[Geometry]) extends Geometry
+case class GeometryCollection(geometries:List[Geometry]) extends Geometry {
+  override def bbox(): BBox = SpatialDataUtil.spatialDataBBox(geometries)
+}
 
 /**
   * A geometry with properties
@@ -84,14 +103,18 @@ case class GeometryCollection(geometries:List[Geometry]) extends Geometry
   * @param geometry
   * @param properties
   */
-case class Feature(id:Option[String], geometry: Geometry, properties:Map[String, Any]) extends SpatialData
+case class Feature(id:Option[String], geometry: Geometry, properties:Map[String, Any]) extends SpatialData {
+  override def bbox(): BBox = geometry.bbox()
+}
 
 /**
   * A collection of geometries with properties
   *
   * @param features
   */
-case class FeatureCollection(features:List[Feature]) extends SpatialData
+case class FeatureCollection(features:List[Feature]) extends SpatialData {
+  override def bbox(): BBox = SpatialDataUtil.spatialDataBBox(features)
+}
 
 /**
   * A class for representing bounding boxes.

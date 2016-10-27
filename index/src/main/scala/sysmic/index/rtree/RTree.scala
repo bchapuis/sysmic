@@ -15,7 +15,7 @@
 package sysmic.index.rtree
 
 import sysmic.geometry.{BBox, Point}
-import sysmic.geometry.GeometryUtil._
+import sysmic.geometry.SpatialDataUtil._
 import sysmic.index.rtree.RTree._
 
 import scala.runtime.ScalaRunTime
