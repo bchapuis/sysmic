@@ -14,6 +14,7 @@
 
 package sysmic.algorithm
 
+import sysmic.geometry.EuclideanGeometry._
 import sysmic.geometry.{Geometry, Point}
 
 /**
@@ -35,7 +36,7 @@ object RamerDouglasPeucker {
 
       // Find the point with the maximum distance
       val (index, distance) = points.zipWithIndex
-        .map(t => (t._2, Point.perpendicularDistance(t._1, first, last)))
+        .map(t => (t._2, perpendicularDistance(t._1, first, last)))
         .maxBy(t => t._2)
 
       // If max distance is greater than epsilon, recursively simplify

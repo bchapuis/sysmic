@@ -28,7 +28,7 @@ class GeoBufSpec extends FunSpec {
   val multiPoint = MultiPoint(List(Point(1.1,1.1), Point(2.2,2.2)))
   val multiLineString = MultiLineString(List(LineString(List(Point(1.1,1.1), Point(2.2,2.2))), LineString(List(Point(1.1,1.1), Point(2.2,2.2)))))
   val multiPolygon = MultiPolygon(List(Polygon(List(Point(1.1,1.1), Point(2.2,2.2))), Polygon(List(Point(1.1,1.1), Point(2.2,2.2)))))
-  val feature = Feature(point, Map("a" -> "a", "b" -> "b"), Some("id"))
+  val feature = Feature(Some("id"), point, Map("a" -> "a", "b" -> "b"))
   val featureCollection = FeatureCollection(List(feature, feature))
 
   describe("GeoBuf Format") {

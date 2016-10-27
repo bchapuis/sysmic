@@ -14,146 +14,290 @@
 
 package sysmic.format
 
-import java.lang.reflect.Type
+import java.lang.reflect.{ParameterizedType, Type}
 
 import sysmic.geometry._
 import com.google.gson._
+import com.google.gson.reflect.TypeToken
+import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl
+
 import scala.collection.JavaConverters._
 
-class GeoJsonSerializer extends JsonSerializer[Geometry] {
+class ListAdapter extends JsonSerializer[List[_]] with JsonDeserializer[List[_]] {
+  import scala.collection.JavaConverters._
 
-  def coordinates(c:AnyRef):AnyRef = c match {
-    case Point(x, y) =>
-      Array(x, y)
-    case points:List[Point] =>
-      points.map(coordinates).toArray
-    case points:List[List[Point]] =>
-      points.map(coordinates).toArray
-    case _ =>
-      throw new UnsupportedOperationException
+  override def serialize(src: List[_], typeOfSrc: Type, context: JsonSerializationContext): JsonElement = {
+    val p = scalaListTypeToJava(typeOfSrc.asInstanceOf[ParameterizedType])
+    context.serialize(src.asInstanceOf[List[Any]].asJava, p)
   }
 
-  def serializeGeometry(name:String, points:AnyRef, context:JsonSerializationContext):JsonObject = {
+  override def deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): List[_] = {
+    val p = scalaListTypeToJava(typeOfT.asInstanceOf[ParameterizedType])
+    val javaList: java.util.List[_ <: Any] = context.deserialize(json, p)
+    javaList.asScala.toList
+  }
+
+  private def scalaListTypeToJava(t: ParameterizedType): ParameterizedType = {
+    ParameterizedTypeImpl.make(classOf[java.util.List[_]], t.getActualTypeArguments, null)
+  }
+
+}
+
+class MapAdapter[A, B] extends JsonSerializer[Map[A,B]] with JsonDeserializer[Map[A,B]] {
+
+  override def serialize(src: Map[A,B], typeOfSrc: Type, context: JsonSerializationContext): JsonElement = {
+    context.serialize(src.asInstanceOf[Map[A,B]].asJava)
+  }
+
+  override def deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): Map[A,B] = {
+    context.deserialize[java.util.Map[A,B]](json, classOf[java.util.Map[A,B]]).asScala.toMap
+  }
+
+}
+
+class PointAdapter extends JsonSerializer[Point] with JsonDeserializer[Point] {
+
+  override def deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): Point = {
+    val jsonObject = json.getAsJsonObject
+    val coordinates = context.deserialize[Array[Double]](jsonObject.get("coordinates"), classOf[Array[Double]])
+    Point(coordinates(0), coordinates(1))
+  }
+
+  override def serialize(src: Point, typeOfSrc: Type, context: JsonSerializationContext): JsonElement = {
     val json = new JsonObject()
-    json.addProperty("type", name)
-    val c = coordinates(points)
-    json.add("coordinates", context.serialize(c))
+    json.addProperty("type", "Point")
+    val coordinates = Array(src.x, src.y)
+    json.add("coordinates", context.serialize(coordinates))
     json
   }
 
-  def serializeFeature(feature:Feature, context: JsonSerializationContext):JsonObject = {
+}
+
+class LineStringAdapter extends JsonSerializer[LineString] with JsonDeserializer[LineString] {
+
+  override def deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): LineString = {
+    val jsonObject = json.getAsJsonObject
+    val coordinates = context.deserialize[Array[Array[Double]]](jsonObject.get("coordinates"), classOf[Array[Array[Double]]])
+    val points = coordinates.map(c => Point(c(0), c(1))).toList
+    LineString(points)
+  }
+
+  override def serialize(src: LineString, typeOfSrc: Type, context: JsonSerializationContext): JsonElement = {
+    val json = new JsonObject()
+    json.addProperty("type", "LineString")
+    val coordinates = src.points.map(p => Array(p.x, p.y)).toArray
+    json.add("coordinates", context.serialize(coordinates))
+    json
+  }
+
+}
+
+class PolygonAdapter extends JsonSerializer[Polygon] with JsonDeserializer[Polygon] {
+
+  override def deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): Polygon = {
+    val jsonObject = json.getAsJsonObject
+    val coordinates = context.deserialize[Array[Array[Double]]](jsonObject.get("coordinates"), classOf[Array[Array[Double]]])
+    val points = coordinates.map(c => Point(c(0), c(1))).toList
+    Polygon(points)
+  }
+
+  override def serialize(src: Polygon, typeOfSrc: Type, context: JsonSerializationContext): JsonElement = {
+    val json = new JsonObject()
+    json.addProperty("type", "Polygon")
+    val coordinates = src.points.map(p => Array(p.x, p.y)).toArray
+    json.add("coordinates", context.serialize(coordinates))
+    json
+  }
+
+}
+
+class MultiPointAdapter extends JsonSerializer[MultiPoint] with JsonDeserializer[MultiPoint] {
+
+  override def deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): MultiPoint = {
+    val jsonObject = json.getAsJsonObject
+    val coordinates = context.deserialize[Array[Array[Double]]](jsonObject.get("coordinates"), classOf[Array[Array[Double]]])
+    val points = coordinates.map(c => Point(c(0), c(1))).toList
+    MultiPoint(points)
+  }
+
+  override def serialize(src: MultiPoint, typeOfSrc: Type, context: JsonSerializationContext): JsonElement = {
+    val json = new JsonObject()
+    json.addProperty("type", "MultiPoint")
+    val coordinates = src.points.map(p => Array(p.x, p.y)).toArray
+    json.add("coordinates", context.serialize(coordinates))
+    json
+  }
+
+}
+
+class MultiLineStringAdapter extends JsonSerializer[MultiLineString] with JsonDeserializer[MultiLineString] {
+
+  override def deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): MultiLineString = {
+    val jsonObject = json.getAsJsonObject
+    val coordinates = context.deserialize[Array[Array[Array[Double]]]](jsonObject.get("coordinates"), classOf[Array[Array[Array[Double]]]])
+    val lines = coordinates.map(array => {
+      val points = array.map(c => Point(c(0), c(1))).toList
+      LineString(points)
+    }).toList
+    MultiLineString(lines)
+  }
+
+  override def serialize(src: MultiLineString, typeOfSrc: Type, context: JsonSerializationContext): JsonElement = {
+    val json = new JsonObject()
+    json.addProperty("type", "MultiLineString")
+    val coordinates = src.lines.map(l => l.points.map(p => Array(p.x, p.y)))
+    val listType = new TypeToken[List[List[Array[Double]]]] {}.getType
+    json.add("coordinates", context.serialize(coordinates, listType))
+    json
+  }
+
+}
+
+class MultiPolygonAdapter extends JsonSerializer[MultiPolygon] with JsonDeserializer[MultiPolygon] {
+
+  override def deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): MultiPolygon = {
+    val jsonObject = json.getAsJsonObject
+    val coordinates = context.deserialize[Array[Array[Array[Double]]]](jsonObject.get("coordinates"), classOf[Array[Array[Array[Double]]]])
+    val lines = coordinates.map(array => {
+      val points = array.map(c => Point(c(0), c(1))).toList
+      Polygon(points)
+    }).toList
+    MultiPolygon(lines)
+  }
+
+  override def serialize(src: MultiPolygon, typeOfSrc: Type, context: JsonSerializationContext): JsonElement = {
+    val json = new JsonObject()
+    json.addProperty("type", "MultiPolygon")
+    val coordinates = src.polygons.map(l => l.points.map(p => Array(p.x, p.y)))
+    val listType = new TypeToken[List[List[Array[Double]]]] {}.getType
+    json.add("coordinates", context.serialize(coordinates, listType))
+    json
+  }
+
+}
+
+class GeometryAdapter extends JsonSerializer[Geometry] with JsonDeserializer[Geometry] {
+
+  override def serialize(src: Geometry, typeOfSrc: Type, context: JsonSerializationContext): JsonElement = src match {
+    case g:Point => context.serialize(g, classOf[Point])
+    case g:LineString => context.serialize(g, classOf[LineString])
+    case g:Polygon => context.serialize(g, classOf[Polygon])
+    case g:MultiPoint => context.serialize(g, classOf[MultiPoint])
+    case g:MultiLineString => context.serialize(g, classOf[MultiLineString])
+    case g:MultiPolygon => context.serialize(g, classOf[MultiPolygon])
+  }
+
+  override def deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext):Geometry = {
+    json.getAsJsonObject.get("type").getAsString match {
+      case "Point" => context.deserialize[Point](json, classOf[Point])
+      case "LineString" => context.deserialize[LineString](json, classOf[LineString])
+      case "Polygon" => context.deserialize[Polygon](json, classOf[Polygon])
+      case "MultiPoint" => context.deserialize[MultiPoint](json, classOf[MultiPoint])
+      case "MultiLineString" => context.deserialize[MultiLineString](json, classOf[MultiLineString])
+      case "MultiPolygon" => context.deserialize[MultiPolygon](json, classOf[MultiPolygon])
+      case geoJsonType => throw new JsonParseException(s"Unknown GeoJson type: ${geoJsonType.toString}")
+    }
+  }
+
+}
+
+class FeatureAdapter extends JsonSerializer[Feature] with JsonDeserializer[Feature] {
+
+  override def deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): Feature = {
+    val jsonObject = json.getAsJsonObject
+    val geometry = context.deserialize[SpatialData](jsonObject.get("geometry"), classOf[SpatialData]).asInstanceOf[Geometry]
+    val properties = context.deserialize[java.util.Map[String, Any]](jsonObject.get("properties"), classOf[java.util.Map[String, Any]])
+    val id = if (jsonObject.has("id")) Some(jsonObject.get("id").getAsString) else None
+    Feature(id, geometry, properties.asScala.toMap)
+  }
+
+  override def serialize(src: Feature, typeOfSrc: Type, context: JsonSerializationContext): JsonElement = {
     val json = new JsonObject()
     json.addProperty("type", "Feature")
-    if (!feature.id.isEmpty) {
-      json.addProperty("id", feature.id.get)
+    if (!src.id.isEmpty) {
+      json.addProperty("id", src.id.get)
     }
-    if (!feature.properties.isEmpty) {
+    if (!src.properties.isEmpty) {
       val properties = new JsonObject()
-      json.add("properties", context.serialize(feature.properties.asJava))
+      json.add("properties", context.serialize(src.properties.asJava))
     }
-    json.add("geometry", context.serialize(feature.geometry))
+    json.add("geometry", context.serialize(src.geometry))
     json
   }
+}
 
-  def serializeFeatures(features: FeatureCollection, context: JsonSerializationContext):JsonObject = {
+class FeatureCollectionAdapter extends JsonSerializer[FeatureCollection] with JsonDeserializer[FeatureCollection] {
+
+  override def deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): FeatureCollection = {
+    val jsonObject = json.getAsJsonObject
+    val jsonArray = jsonObject.get("features").getAsJsonArray
+    val features = for (i <- 0 until jsonArray.size()) yield {
+      context.deserialize[SpatialData](jsonArray.get(i), classOf[SpatialData]).asInstanceOf[Feature]
+    }
+    FeatureCollection(features.toList)
+  }
+
+  override def serialize(src: FeatureCollection, typeOfSrc: Type, context: JsonSerializationContext): JsonElement = {
     val json = new JsonObject()
     json.addProperty("type", "FeatureCollection")
-    json.add("features", context.serialize(features.features.toArray))
+    json.add("features", context.serialize(src.features.toArray))
     json
   }
-
-  def serialize(src: Geometry, typeOfSrc: Type, context: JsonSerializationContext): JsonElement = src match {
-    case point:Point =>
-      serializeGeometry("Point", point, context)
-    case LineString(points) =>
-      serializeGeometry("LineString", points, context)
-    case Polygon(points) =>
-      serializeGeometry("Polygon", points, context)
-    case MultiPoint(points) =>
-      serializeGeometry("MultiPoint", points, context)
-    case MultiLineString(lines) =>
-      serializeGeometry("MultiLineString", lines.map(_.points), context)
-    case MultiPolygon(polygons) =>
-      serializeGeometry("MultiPolygon", polygons.map(_.points), context)
-    case feature:Feature =>
-      serializeFeature(feature, context)
-    case features:FeatureCollection =>
-      serializeFeatures(features, context)
-    case _ =>
-      throw new UnsupportedOperationException
-  }
-
 }
 
-class GeoJsonDeserializer extends JsonDeserializer[Data] {
+class DataAdapter extends JsonSerializer[SpatialData] with JsonDeserializer[SpatialData] {
 
-  def deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): Data = {
-    val o = json.getAsJsonObject
-    o.get("type").getAsString match {
-      case "Point" =>
-        val coordinates = context.deserialize[Array[Double]](o.get("coordinates"), classOf[Array[Double]])
-        Point(coordinates(0), coordinates(1))
-      case "LineString" =>
-        val coordinates = context.deserialize[Array[Array[Double]]](o.get("coordinates"), classOf[Array[Array[Double]]])
-        val points = coordinates.map(c => Point(c(0), c(1))).toList
-        LineString(points)
-      case "Polygon" =>
-        val coordinates = context.deserialize[Array[Array[Double]]](o.get("coordinates"), classOf[Array[Array[Double]]])
-        val points = coordinates.map(c => Point(c(0), c(1))).toList
-        Polygon(points)
-      case "MultiPoint" =>
-        val coordinates = context.deserialize[Array[Array[Double]]](o.get("coordinates"), classOf[Array[Array[Double]]])
-        val points = coordinates.map(c => Point(c(0), c(1))).toList
-        MultiPoint(points)
-      case "MultiLineString" =>
-        val coordinates = context.deserialize[Array[Array[Array[Double]]]](o.get("coordinates"), classOf[Array[Array[Double]]])
-        val lines = coordinates.map(array => {
-          val points = array.map(c => Point(c(0), c(1))).toList
-          LineString(points)
-        }).toList
-        MultiLineString(lines)
-      case "MultiPolygon" =>
-        val coordinates = context.deserialize[Array[Array[Array[Double]]]](o.get("coordinates"), classOf[Array[Array[Double]]])
-        val lines = coordinates.map(array => {
-          val points = array.map(c => Point(c(0), c(1))).toList
-          Polygon(points)
-        }).toList
-        MultiPolygon(lines)
-      case "Feature" =>
-        val geometry = context.deserialize[Geometry](o.get("geometry"), classOf[Geometry])
-        val properties = context.deserialize[java.util.Map[String, Any]](o.get("properties"), classOf[java.util.Map[String, Any]])
-        val id = if (o.has("id")) Some(o.get("id").getAsString) else None
-        Feature(geometry, properties.asScala.toMap, id)
-      case "FeatureCollection" =>
-        val features = context.deserialize(o.get("features"), classOf[Feature])
-        FeatureCollection(features)
-      case _ =>
-        throw new JsonParseException("Unknown GeoJson type")
+  override def serialize(src: SpatialData, typeOfSrc: Type, context: JsonSerializationContext): JsonElement = src match {
+    case g:Point => context.serialize(g, classOf[Point])
+    case g:LineString => context.serialize(g, classOf[LineString])
+    case g:Polygon => context.serialize(g, classOf[Polygon])
+    case g:MultiPoint => context.serialize(g, classOf[MultiPoint])
+    case g:MultiLineString => context.serialize(g, classOf[MultiLineString])
+    case g:MultiPolygon => context.serialize(g, classOf[MultiPolygon])
+    case g:Feature => context.serialize(g, classOf[Feature])
+    case g:FeatureCollection => context.serialize(g, classOf[FeatureCollection])
+  }
+
+  override def deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): SpatialData = {
+    json.getAsJsonObject.get("type").getAsString match {
+      case "Point" => context.deserialize[Point](json, classOf[Point])
+      case "LineString" => context.deserialize[LineString](json, classOf[LineString])
+      case "Polygon" => context.deserialize[Polygon](json, classOf[Polygon])
+      case "MultiPoint" => context.deserialize[MultiPoint](json, classOf[MultiPoint])
+      case "MultiLineString" => context.deserialize[MultiLineString](json, classOf[MultiLineString])
+      case "MultiPolygon" => context.deserialize[MultiPolygon](json, classOf[MultiPolygon])
+      case "Feature" => context.deserialize[Feature](json, classOf[Feature])
+      case "FeatureCollection" => context.deserialize[FeatureCollection](json, classOf[FeatureCollection])
+      case geoJsonType => throw new JsonParseException(s"Unknown GeoJson type: ${geoJsonType.toString}")
     }
   }
 
 }
 
-object GeoJson extends Format[String] {
+object GeoJson extends Format[String, SpatialData] {
 
-  private val gson = new GsonBuilder()
-    .registerTypeAdapter(classOf[Point], new GeoJsonSerializer())
-    .registerTypeAdapter(classOf[LineString], new GeoJsonSerializer())
-    .registerTypeAdapter(classOf[Polygon], new GeoJsonSerializer())
-    .registerTypeAdapter(classOf[MultiPoint], new GeoJsonSerializer())
-    .registerTypeAdapter(classOf[MultiLineString], new GeoJsonSerializer())
-    .registerTypeAdapter(classOf[MultiPolygon], new GeoJsonSerializer())
-    .registerTypeAdapter(classOf[Feature], new GeoJsonSerializer())
-    .registerTypeAdapter(classOf[FeatureCollection], new GeoJsonSerializer())
-    .registerTypeAdapter(classOf[Geometry], new GeoJsonDeserializer())
-    .create()
+  val gsonBuilder = new GsonBuilder()
+    .registerTypeHierarchyAdapter(classOf[List[_]], new ListAdapter())
+    .registerTypeAdapter(classOf[Map[String, Any]], new MapAdapter[String, Any]())
+    .registerTypeAdapter(classOf[Point], new PointAdapter())
+    .registerTypeAdapter(classOf[LineString], new LineStringAdapter())
+    .registerTypeAdapter(classOf[Polygon], new PolygonAdapter())
+    .registerTypeAdapter(classOf[MultiPoint], new MultiPointAdapter())
+    .registerTypeAdapter(classOf[MultiLineString], new MultiLineStringAdapter())
+    .registerTypeAdapter(classOf[MultiPolygon], new MultiPolygonAdapter())
+    .registerTypeAdapter(classOf[Geometry], new GeometryAdapter())
+    .registerTypeAdapter(classOf[Feature], new FeatureAdapter())
+    .registerTypeAdapter(classOf[FeatureCollection], new FeatureCollectionAdapter())
+    .registerTypeAdapter(classOf[SpatialData], new DataAdapter())
 
-  def encode(o:Data):String = {
-    gson.toJson(o)
+  val gsonFormat = gsonBuilder.create()
+
+  def encode(o:SpatialData):String = {
+    gsonFormat.toJson(o)
   }
 
-  def decode(json:String):Data = {
-    gson.fromJson(json, classOf[Data])
+  def decode(json:String):SpatialData = {
+    gsonFormat.fromJson(json, classOf[SpatialData])
   }
 
 }

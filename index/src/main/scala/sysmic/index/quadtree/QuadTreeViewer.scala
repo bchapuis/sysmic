@@ -19,7 +19,7 @@ import java.awt.image.BufferedImage
 import java.io.File
 import javax.imageio.ImageIO
 
-import sysmic.geometry.{Point, BBox}
+import sysmic.geometry.{BBox, Point}
 import sysmic.index.quadtree.QuadTree._
 
 /**
@@ -58,10 +58,7 @@ object QuadTreeViewer {
             g.drawOval(p.x.toInt, p.y.toInt, 3, 3)
           case r: BBox =>
             g.setPaint(Color.BLUE)
-            g.drawRect(r.p1.y.toInt,
-                       r.p1.y.toInt,
-                       r.width.toInt,
-                       r.height.toInt)
+            g.drawRect(r.p1.y.toInt, r.p1.y.toInt, r.width.toInt, r.height.toInt)
           case _ =>
       })
       drawShapes(g, node.get.nw)
@@ -87,8 +84,7 @@ object QuadTreeViewer {
   private def drawTree(g: Graphics2D, node: Option[Node[_, _]]): Unit = {
     if (node.isDefined) {
       g.setPaint(Color.GRAY)
-      g.drawRect(node.get.boundary.p1.x.toInt,
-                 node.get.boundary.p1.y.toInt,
+      g.drawRect(node.get.boundary.p1.x.toInt, node.get.boundary.p1.y.toInt,
                  (node.get.boundary.p2.x - node.get.boundary.p1.x).toInt,
                  (node.get.boundary.p2.y - node.get.boundary.p1.y).toInt)
       drawTree(g, node.get.nw)

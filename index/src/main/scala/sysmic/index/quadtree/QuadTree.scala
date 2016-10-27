@@ -14,7 +14,7 @@
 
 package sysmic.index.quadtree
 
-import sysmic.geometry.{Point, BBox}
+import sysmic.geometry.{BBox, Point}
 import sysmic.index.quadtree.QuadTree.{Entry, Node}
 
 import scala.runtime.ScalaRunTime
@@ -25,8 +25,7 @@ import scala.math._
   */
 object QuadTree {
 
-  case class Node[K, V](boundary: BBox,
-                        entries: List[Entry[K, V]] = List.empty,
+  case class Node[K, V](boundary: BBox, entries: List[Entry[K, V]] = List.empty,
                         nw: Option[Node[K, V]] = None,
                         ne: Option[Node[K, V]] = None,
                         sw: Option[Node[K, V]] = None,

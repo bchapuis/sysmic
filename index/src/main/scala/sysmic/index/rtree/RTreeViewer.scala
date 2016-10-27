@@ -18,6 +18,8 @@ import java.awt.{Color, Graphics2D}
 import java.awt.image.BufferedImage
 import java.io.File
 import javax.imageio.ImageIO
+
+import sysmic.geometry.BBox
 import sysmic.index.rtree.RTree._
 
 /**
@@ -37,10 +39,10 @@ object RTreeViewer {
     node.children.foreach(e => {
       if (!e.value.isInstanceOf[Node]) {
         g.setPaint(Color.RED)
-        drawRectangle(g, e.mbb)
+        drawRectangle(g, e.bbox)
       } else {
         g.setPaint(Color.BLUE)
-        drawRectangle(g, e.mbb)
+        drawRectangle(g, e.bbox)
       }
       if (e.value.isInstanceOf[Node]) {
         draw(g, e.value.asInstanceOf[Node])
@@ -48,11 +50,11 @@ object RTreeViewer {
     })
   }
 
-  def drawRectangle(g: Graphics2D, box: MBB) = {
-    g.drawRect(box.x1.toInt,
-               box.y1.toInt,
-               (box.x2 - box.x1).toInt,
-               (box.y2 - box.y1).toInt)
+  def drawRectangle(g: Graphics2D, box: BBox) = {
+    g.drawRect(box.p1.x.toInt,
+               box.p1.y.toInt,
+               (box.p2.x - box.p1.x).toInt,
+               (box.p2.y - box.p1.y).toInt)
   }
 
 }

@@ -14,12 +14,12 @@
 
 package sysmic.format
 
-import sysmic.geometry.Data
+import sysmic.geometry.SpatialData
 
-trait Format[T] {
+trait Format[A, B] {
 
-  def encode(data:Data):T
+  def encode(data:B):A
 
-  def decode(string:T):Data
+  def decode(string:A):B
 
 }

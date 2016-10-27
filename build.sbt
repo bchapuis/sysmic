@@ -1,5 +1,5 @@
 lazy val commonSettings = Seq(
-  organization := "ch.doplab.spatial",
+  organization := "io.sysmic",
   version := "1.0",
   scalaVersion := "2.11.8",
   unmanagedBase := (unmanagedBase in ThisProject).value,

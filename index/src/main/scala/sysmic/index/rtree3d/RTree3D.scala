@@ -30,12 +30,7 @@ object RTree3D {
     override lazy val hashCode = ScalaRunTime._hashCode(this)
   }
 
-  case class MBB(val x1: Double,
-                 val y1: Double,
-                 val z1: Double,
-                 val x2: Double,
-                 val y2: Double,
-                 val z2: Double) {
+  case class MBB(x1: Double, y1: Double, z1: Double, x2: Double, y2: Double, z2: Double) {
 
     assert(x1 <= x2)
     assert(y1 <= y2)
@@ -45,7 +40,7 @@ object RTree3D {
     lazy val height = x2 - x1
     lazy val depth = z2 - z1
 
-    lazy val size = width * height * depth
+    lazy val volume = width * height * depth
 
     def contains(mbb: MBB): Boolean = {
       x1 <= mbb.x1 &&
@@ -79,14 +74,9 @@ object RTree3D {
 
 }
 
-class RTree3D[V](val M: Int,
-                 val m: Int,
-                 val root: Node,
-                 val splitter: Splitter) {
+class RTree3D[V](M: Int, m: Int, root: Node, splitter: Splitter) {
   assert(root != null)
   assert(splitter != null)
-
-  import splitter._
 
   def search(mbb: MBB): Stream[V] = {
     searchEntries(mbb).map(_.value.asInstanceOf[V])
@@ -115,19 +105,12 @@ class RTree3D[V](val M: Int,
       case Left(n) =>
         new RTree3D(M, m, n, splitter)
       case Right((n1, n2)) =>
-        new RTree3D(M,
-                    m,
-                    Node(
-                        List(
-                            Entry(wrap(n1.children), n1),
-                            Entry(wrap(n2.children), n2)
-                        )),
-                    splitter)
+        val entries =  List(Entry(wrap(n1.children), n1), Entry(wrap(n2.children), n2))
+        new RTree3D(M, m, Node(entries), splitter)
     }
   }
 
-  private[rtree3d] def insert(entry: Entry,
-                              node: Node): Either[Node, (Node, Node)] = {
+  private[rtree3d] def insert(entry: Entry, node: Node): Either[Node, (Node, Node)] = {
     if (isLeaf(node)) {
       insertLeaf(entry, node)
     } else {
@@ -135,8 +118,7 @@ class RTree3D[V](val M: Int,
     }
   }
 
-  private[rtree3d] def insertLeaf(entry: Entry,
-                                  leaf: Node): Either[Node, (Node, Node)] = {
+  private[rtree3d] def insertLeaf(entry: Entry, leaf: Node): Either[Node, (Node, Node)] = {
     if (leaf.children.size < M) {
       Left(Node(leaf.children :+ entry))
     } else {
@@ -145,27 +127,19 @@ class RTree3D[V](val M: Int,
     }
   }
 
-  private[rtree3d] def insertTree(entry: Entry,
-                                  tree: Node): Either[Node, (Node, Node)] = {
-    val l = tree.children.minBy(f => wrap(List(f, entry)).size - f.mbb.size)
+  private[rtree3d] def insertTree(entry: Entry, tree: Node): Either[Node, (Node, Node)] = {
+    val l = tree.children.minBy(f => wrap(List(f, entry)).volume - f.mbb.volume)
     val d = tree.children.diff(List(l))
     insert(entry, l.value.asInstanceOf[Node]) match {
       case Left(n) =>
         Left(Node(Entry(wrap(n.children), n) :: d))
       case Right((n1, n2)) =>
         if (tree.children.size < M) {
-          Left(
-              Node(
-                  d ++ List(
-                      Entry(wrap(n1.children), n1),
-                      Entry(wrap(n2.children), n2)
-                  )))
+          val entries = d ++ List(Entry(wrap(n1.children), n1), Entry(wrap(n2.children), n2))
+          Left(Node(entries))
         } else {
-          val (n11, n22) = splitter.split(
-              d ++ List(
-                  Entry(wrap(n1.children), n1),
-                  Entry(wrap(n2.children), n2)
-              ))
+          val entries = d ++ List(Entry(wrap(n1.children), n1), Entry(wrap(n2.children), n2))
+          val (n11, n22) = splitter.split(entries)
           Right((Node(n11), Node(n22)))
         }
     }
@@ -194,9 +168,7 @@ class RTree3D[V](val M: Int,
     }
   }
 
-  private[rtree3d] def delete(entry: Entry,
-                              node: Node,
-                              q: List[Node]): (Node, List[Node]) = {
+  private[rtree3d] def delete(entry: Entry, node: Node, q: List[Node]): (Node, List[Node]) = {
     if (isLeaf(node)) {
       (deleteLeaf(entry, node), q)
     } else {
@@ -209,9 +181,7 @@ class RTree3D[V](val M: Int,
     Node(children)
   }
 
-  private[rtree3d] def deleteTree(entry: Entry,
-                                  tree: Node,
-                                  q: List[Node]): (Node, List[Node]) = {
+  private[rtree3d] def deleteTree(entry: Entry, tree: Node, q: List[Node]): (Node, List[Node]) = {
     // non-overlapping entries
     val noe = tree.children.filter(child => !entry.mbb.overlap(child.mbb))
 
@@ -219,8 +189,7 @@ class RTree3D[V](val M: Int,
     val oe = tree.children.diff(noe)
 
     // overlapping nodes after deletion and subsequent nodes to reinsert
-    val onsq =
-      oe.map(child => delete(entry, child.value.asInstanceOf[Node], List()))
+    val onsq = oe.map(child => delete(entry, child.value.asInstanceOf[Node], List()))
 
     // overlapping nodes after deletion
     val on = onsq.map(_._1)

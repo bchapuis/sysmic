@@ -14,14 +14,12 @@
 
 package sysmic.index.quadtree
 
-import sysmic.geometry.{Point, BBox}
+import sysmic.geometry.{BBox, Point}
 
 /**
   * Created by bchapuis on 07/04/16.
   */
-class PointQuadTree[V](val capacity: Int,
-                       val root: QuadTree.Node[Point, V])
-    extends QuadTree[Point, V] {
+class PointQuadTree[V](val capacity: Int, val root: QuadTree.Node[Point, V]) extends QuadTree[Point, V] {
 
   import QuadTree._
 
@@ -67,9 +65,7 @@ class PointQuadTree[V](val capacity: Int,
         val ne = new BBox(Point(x + w, y + h), Point(x + 2 * w, y + 2 * h))
         val sw = new BBox(Point(x, y), Point(x + w, y + h))
         val se = new BBox(Point(x + w, y), Point(x + 2 * w, y + h))
-        Node[Point, V](
-            node.boundary,
-            List(),
+        Node[Point, V]( node.boundary, List(),
             Some(Node(nw, entries.filter(e => QuadTree.contains(nw, e.key)))),
             Some(Node(ne, entries.filter(e => QuadTree.contains(ne, e.key)))),
             Some(Node(sw, entries.filter(e => QuadTree.contains(sw, e.key)))),
@@ -99,8 +95,7 @@ class PointQuadTree[V](val capacity: Int,
       val sw = delete(node.sw.get, key, value)
       val se = delete(node.se.get, key, value)
       if (nw.entries.size + ne.entries.size + sw.entries.size + se.entries.size <= capacity) {
-        Node[Point, V](node.boundary,
-                       nw.entries ++ ne.entries ++ sw.entries ++ se.entries)
+        Node[Point, V](node.boundary, nw.entries ++ ne.entries ++ sw.entries ++ se.entries)
       } else {
         Node[Point, V](node.boundary, List(), Some(nw), Some(ne), Some(sw), Some(se))
       }

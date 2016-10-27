@@ -35,10 +35,7 @@ abstract class LinearSplitter(M: Int, m: Int) extends Splitter {
     (ss1, ss2)
   }
 
-  private[rtree3d] def split(
-      g1: List[Entry],
-      g2: List[Entry],
-      entries: List[Entry]): (List[Entry], List[Entry], List[Entry]) = {
+  private[rtree3d] def split(g1: List[Entry], g2: List[Entry], entries: List[Entry]): (List[Entry], List[Entry], List[Entry]) = {
     if (entries.isEmpty) {
       (g1, g2, entries)
     } else if (g1.size + entries.size == m) {
@@ -47,10 +44,10 @@ abstract class LinearSplitter(M: Int, m: Int) extends Splitter {
       (g1, g2 ++ entries, entries)
     } else {
       val (entry, remaining) = pickNext(g1, g2, entries)
-      val a1 = wrap(g1).size
-      val a2 = wrap(g2).size
-      val c1 = wrap(entry :: g1).size - a1
-      val c2 = wrap(entry :: g2).size - a2
+      val a1 = wrap(g1).volume
+      val a2 = wrap(g2).volume
+      val c1 = wrap(entry :: g1).volume - a1
+      val c2 = wrap(entry :: g2).volume - a2
       if (c1 < c2) {
         split(g1 :+ entry, g2, remaining)
       } else if (c2 < c1) {
@@ -67,15 +64,12 @@ abstract class LinearSplitter(M: Int, m: Int) extends Splitter {
     }
   }
 
-  private[rtree3d] def pickNext(g1: List[Entry],
-                                g2: List[Entry],
-                                entries: List[Entry]): (Entry, List[Entry]) = {
+  private[rtree3d] def pickNext(g1: List[Entry], g2: List[Entry], entries: List[Entry]): (Entry, List[Entry]) = {
     // Choose any of the remaining entries
     (entries.head, entries.tail)
   }
 
-  private[rtree3d] def pickSeeds(
-      entries: List[Entry]): (List[Entry], List[Entry], List[Entry]) = {
+  private[rtree3d] def pickSeeds(entries: List[Entry]): (List[Entry], List[Entry], List[Entry]) = {
     // BBox used for separation normalization.
     val r = wrap(entries)
 

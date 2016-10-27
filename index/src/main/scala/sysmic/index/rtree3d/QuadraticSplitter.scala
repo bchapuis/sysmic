@@ -35,21 +35,18 @@ class QuadraticSplitter(M: Int, m: Int) extends Splitter {
     (ss1, ss2)
   }
 
-  private[rtree3d] def pickSeeds(
-      entries: List[Entry]): (List[Entry], List[Entry], List[Entry]) = {
+  private[rtree3d] def pickSeeds(entries: List[Entry]): (List[Entry], List[Entry], List[Entry]) = {
     val (s1, s2) = entries
       .flatMap(e1 => entries.map(e2 => (e1, e2)))
       .maxBy(p => {
         val j = wrap(List(p._1, p._2))
-        j.size - p._1.mbb.size - p._2.mbb.size
+        j.volume - p._1.mbb.volume - p._2.mbb.volume
       })
     (List(s1), List(s2), entries.diff(List(s1, s2)))
   }
 
-  private[rtree3d] def split(
-      g1: List[Entry],
-      g2: List[Entry],
-      entries: List[Entry]): (List[Entry], List[Entry], List[Entry]) = {
+  private[rtree3d] def split(g1: List[Entry], g2: List[Entry],
+                             entries: List[Entry]): (List[Entry], List[Entry], List[Entry]) = {
     if (entries.isEmpty) {
       (g1, g2, entries)
     } else if (g1.size + entries.size == m) {
@@ -58,10 +55,10 @@ class QuadraticSplitter(M: Int, m: Int) extends Splitter {
       (g1, g2 ++ entries, entries)
     } else {
       val (entry, remaining) = pickNext(g1, g2, entries)
-      val a1 = wrap(g1).size
-      val a2 = wrap(g2).size
-      val c1 = wrap(entry :: g1).size - a1
-      val c2 = wrap(entry :: g2).size - a2
+      val a1 = wrap(g1).volume
+      val a2 = wrap(g2).volume
+      val c1 = wrap(entry :: g1).volume - a1
+      val c2 = wrap(entry :: g2).volume - a2
       if (c1 < c2) {
         split(g1 :+ entry, g2, remaining)
       } else if (c2 < c1) {
@@ -78,12 +75,11 @@ class QuadraticSplitter(M: Int, m: Int) extends Splitter {
     }
   }
 
-  private[rtree3d] def pickNext(g1: List[Entry],
-                                g2: List[Entry],
+  private[rtree3d] def pickNext(g1: List[Entry], g2: List[Entry],
                                 entries: List[Entry]): (Entry, List[Entry]) = {
     val entry = entries.maxBy(entry => {
-      val d1 = wrap(entry :: g1).size - wrap(g1).size
-      val d2 = wrap(entry :: g2).size - wrap(g2).size
+      val d1 = wrap(entry :: g1).volume - wrap(g1).volume
+      val d2 = wrap(entry :: g2).volume - wrap(g2).volume
       Math.abs(d2 - d1)
     })
     (entry, entries.diff(List(entry)))

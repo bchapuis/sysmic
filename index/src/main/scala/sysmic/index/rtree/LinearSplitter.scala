@@ -14,6 +14,7 @@
 
 package sysmic.index.rtree
 
+import sysmic.geometry.GeometryUtil._
 import sysmic.index.rtree.RTree._
 
 /**
@@ -27,7 +28,7 @@ class LinearSplitter(M: Int, m: Int) extends Splitter {
     * @param entries
     * @return
     */
-  def split(entries: List[Entry]): (List[Entry], List[Entry]) = {
+  def split(entries: List[Entry]):(List[Entry], List[Entry]) = {
     assert(entries != null)
     assert(entries.size == M + 1)
     val (s1, s2, r) = pickSeeds(entries)
@@ -35,10 +36,7 @@ class LinearSplitter(M: Int, m: Int) extends Splitter {
     (ss1, ss2)
   }
 
-  private[rtree] def split(
-      g1: List[Entry],
-      g2: List[Entry],
-      entries: List[Entry]): (List[Entry], List[Entry], List[Entry]) = {
+  private[rtree] def split(g1: List[Entry], g2: List[Entry], entries: List[Entry]): (List[Entry], List[Entry], List[Entry]) = {
     if (entries.isEmpty) {
       (g1, g2, entries)
     } else if (g1.size + entries.size == m) {
@@ -47,10 +45,10 @@ class LinearSplitter(M: Int, m: Int) extends Splitter {
       (g1, g2 ++ entries, entries)
     } else {
       val (entry, remaining) = pickNext(g1, g2, entries)
-      val a1 = wrap(g1).size
-      val a2 = wrap(g2).size
-      val c1 = wrap(entry :: g1).size - a1
-      val c2 = wrap(entry :: g2).size - a2
+      val a1 = bboxArea(wrap(g1))
+      val a2 = bboxArea(wrap(g2))
+      val c1 = bboxArea(wrap(entry :: g1)) - a1
+      val c2 = bboxArea(wrap(entry :: g2)) - a2
       if (c1 < c2) {
         split(g1 :+ entry, g2, remaining)
       } else if (c2 < c1) {
@@ -67,15 +65,12 @@ class LinearSplitter(M: Int, m: Int) extends Splitter {
     }
   }
 
-  private[rtree] def pickNext(g1: List[Entry],
-                              g2: List[Entry],
-                              entries: List[Entry]): (Entry, List[Entry]) = {
+  private[rtree] def pickNext(g1: List[Entry], g2: List[Entry], entries: List[Entry]): (Entry, List[Entry]) = {
     // Choose any of the remaining entries
     (entries.head, entries.tail)
   }
 
-  private[rtree] def pickSeeds(
-      entries: List[Entry]): (List[Entry], List[Entry], List[Entry]) = {
+  private[rtree] def pickSeeds(entries: List[Entry]): (List[Entry], List[Entry], List[Entry]) = {
     // BBox used for separation normalization.
     val r = wrap(entries)
 
@@ -83,13 +78,13 @@ class LinearSplitter(M: Int, m: Int) extends Splitter {
     // find the entry whose rectangle has the highest low side,
     // and the one with the lowest hight side.
 
-    val hlsx = entries.maxBy(e => e.mbb.x1)
-    val lhsx = entries.minBy(e => e.mbb.x2)
-    val sepx = (hlsx.mbb.x2 - lhsx.mbb.x1) / (r.x2 - r.x1)
+    val hlsx = entries.maxBy(e => e.bbox.p1.x)
+    val lhsx = entries.minBy(e => e.bbox.p2.x)
+    val sepx = (hlsx.bbox.p2.x - lhsx.bbox.p1.x) / (r.p2.x - r.p1.x)
 
-    val hlsy = entries.maxBy(e => e.mbb.y1)
-    val lhsy = entries.minBy(e => e.mbb.y2)
-    val sepy = (hlsy.mbb.y2 - lhsy.mbb.y1) / (r.y2 - r.y1)
+    val hlsy = entries.maxBy(e => e.bbox.p1.y)
+    val lhsy = entries.minBy(e => e.bbox.p2.y)
+    val sepy = (hlsy.bbox.p2.y - lhsy.bbox.p1.y) / (r.p2.y - r.p1.y)
 
     // Select the most extreme pair
     val maxSeparation = List(
@@ -97,9 +92,7 @@ class LinearSplitter(M: Int, m: Int) extends Splitter {
         (hlsy, lhsy, sepy)
     ).maxBy(_._3)
 
-    (List(maxSeparation._1),
-     List(maxSeparation._2),
-     entries.diff(List(maxSeparation._1, maxSeparation._2)))
+    (List(maxSeparation._1), List(maxSeparation._2), entries.diff(List(maxSeparation._1, maxSeparation._2)))
   }
 
 }

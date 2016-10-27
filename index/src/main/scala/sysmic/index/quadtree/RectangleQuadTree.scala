@@ -14,13 +14,12 @@
 
 package sysmic.index.quadtree
 
-import sysmic.geometry.{Point, BBox}
+import sysmic.geometry.{BBox, Point}
 
 /**
   * Created by bchapuis on 27/04/16.
   */
-class RectangleQuadTree[V](val root: QuadTree.Node[BBox, V],
-                           val maxDepth: Int)
+class RectangleQuadTree[V](val root: QuadTree.Node[BBox, V], val maxDepth: Int)
     extends QuadTree[BBox, V] {
 
   import QuadTree._
@@ -33,8 +32,7 @@ class RectangleQuadTree[V](val root: QuadTree.Node[BBox, V],
     search(Some(root), s)
   }
 
-  def search(node: Option[Node[BBox, V]],
-             s: BBox): Stream[Entry[BBox, V]] = {
+  def search(node: Option[Node[BBox, V]], s: BBox): Stream[Entry[BBox, V]] = {
     if (node.isDefined && overlap(s, node.get.boundary)) {
       node.get.entries.filter(e => QuadTree.overlap(s, e.key)).toStream ++
       search(node.get.nw, s) ++
@@ -51,10 +49,7 @@ class RectangleQuadTree[V](val root: QuadTree.Node[BBox, V],
     new RectangleQuadTree[V](r, maxDepth)
   }
 
-  private def insert(node: Node[BBox, V],
-                     key: BBox,
-                     value: V,
-                     depth: Int): Node[BBox, V] = {
+  private def insert(node: Node[BBox, V], key: BBox, value: V, depth: Int): Node[BBox, V] = {
     val x1 = node.boundary.p1.x
     val x2 = node.boundary.p2.x
     val x3 = x1 + (x2 - x1) / 2
@@ -62,51 +57,21 @@ class RectangleQuadTree[V](val root: QuadTree.Node[BBox, V],
     val y4 = node.boundary.p2.y
     val y3 = y1 + (y4 - y1) / 2
     if (depth >= maxDepth) {
-      Node[BBox, V](node.boundary,
-                         Entry[BBox, V](key, value) :: node.entries,
-                         node.nw,
-                         node.ne,
-                         node.sw,
-                         node.se)
+      Node[BBox, V](node.boundary, Entry[BBox, V](key, value) :: node.entries, node.nw, node.ne, node.sw, node.se)
     } else if (key.p1.x <= x3 && key.p2.y <= y3) {
       val sw = node.sw.getOrElse(Node[BBox, V](BBox(Point(x1, y1), Point(x3, y3))))
-      Node[BBox, V](node.boundary,
-                         node.entries,
-                         node.nw,
-                         node.ne,
-                         Some(insert(sw, key, value, depth + 1)),
-                         node.se)
+      Node[BBox, V](node.boundary, node.entries, node.nw, node.ne, Some(insert(sw, key, value, depth + 1)), node.se)
     } else if (key.p1.x >= x3 && key.p2.y <= y3) {
       val se = node.se.getOrElse(Node[BBox, V](BBox(Point(x3, y1), Point(x2, y3))))
-      Node[BBox, V](node.boundary,
-                         node.entries,
-                         node.nw,
-                         node.ne,
-                         node.sw,
-                         Some(insert(se, key, value, depth + 1)))
+      Node[BBox, V](node.boundary, node.entries, node.nw, node.ne, node.sw, Some(insert(se, key, value, depth + 1)))
     } else if (key.p1.x >= x3 && key.p1.y >= y3) {
       val ne = node.ne.getOrElse(Node[BBox, V](BBox(Point(x3, y3), Point(x2, y4))))
-      Node[BBox, V](node.boundary,
-                         node.entries,
-                         node.nw,
-                         Some(insert(ne, key, value, depth + 1)),
-                         node.sw,
-                         node.se)
+      Node[BBox, V](node.boundary, node.entries, node.nw, Some(insert(ne, key, value, depth + 1)), node.sw, node.se)
     } else if (key.p2.x <= x3 && key.p1.y >= y3) {
       val nw = node.nw.getOrElse(Node[BBox, V](BBox(Point(x1, y3), Point(x3, y4))))
-      Node[BBox, V](node.boundary,
-                         node.entries,
-                         Some(insert(nw, key, value, depth + 1)),
-                         node.ne,
-                         node.sw,
-                         node.se)
+      Node[BBox, V](node.boundary, node.entries, Some(insert(nw, key, value, depth + 1)), node.ne, node.sw, node.se)
     } else {
-      Node[BBox, V](node.boundary,
-                         Entry[BBox, V](key, value) :: node.entries,
-                         node.nw,
-                         node.ne,
-                         node.sw,
-                         node.se)
+      Node[BBox, V](node.boundary, Entry[BBox, V](key, value) :: node.entries, node.nw, node.ne, node.sw, node.se)
     }
   }
 
@@ -115,9 +80,7 @@ class RectangleQuadTree[V](val root: QuadTree.Node[BBox, V],
     new RectangleQuadTree[V](r, maxDepth)
   }
 
-  private def delete(node: Node[BBox, V],
-                     key: BBox,
-                     value: V): Node[BBox, V] = {
+  private def delete(node: Node[BBox, V], key: BBox, value: V): Node[BBox, V] = {
     val x1 = node.boundary.p1.x
     val x2 = node.boundary.p2.x
     val x3 = x1 + (x2 - x1) / 2
@@ -125,41 +88,16 @@ class RectangleQuadTree[V](val root: QuadTree.Node[BBox, V],
     val y4 = node.boundary.p2.y
     val y3 = y1 + (y4 - y1) / 2
     if (key.p1.x <= x3 && key.p2.y <= y3 && node.sw.isDefined) {
-      Node[BBox, V](node.boundary,
-                         node.entries,
-                         node.nw,
-                         node.ne,
-                         Some(delete(node.sw.get, key, value)),
-                         node.se)
+      Node[BBox, V](node.boundary, node.entries, node.nw, node.ne, Some(delete(node.sw.get, key, value)), node.se)
     } else if (key.p1.x >= x3 && key.p2.y <= y3 && node.sw.isDefined) {
-      Node[BBox, V](node.boundary,
-                         node.entries,
-                         node.nw,
-                         node.ne,
-                         node.sw,
-                         Some(delete(node.se.get, key, value)))
+      Node[BBox, V](node.boundary, node.entries, node.nw, node.ne, node.sw, Some(delete(node.se.get, key, value)))
     } else if (key.p1.x >= x3 && key.p1.y >= y3 && node.sw.isDefined) {
-      Node[BBox, V](node.boundary,
-                         node.entries,
-                         node.nw,
-                         Some(delete(node.ne.get, key, value)),
-                         node.sw,
-                         node.se)
+      Node[BBox, V](node.boundary, node.entries, node.nw, Some(delete(node.ne.get, key, value)), node.sw, node.se)
     } else if (key.p2.x <= x3 && key.p1.y >= y3 && node.sw.isDefined) {
-      Node[BBox, V](node.boundary,
-                         node.entries,
-                         Some(delete(node.nw.get, key, value)),
-                         node.ne,
-                         node.sw,
-                         node.se)
+      Node[BBox, V](node.boundary, node.entries, Some(delete(node.nw.get, key, value)), node.ne, node.sw, node.se)
     } else {
       val entries = node.entries.diff(List(Entry(key, value)))
-      Node[BBox, V](node.boundary,
-                         entries,
-                         node.nw,
-                         node.ne,
-                         node.sw,
-                         node.se)
+      Node[BBox, V](node.boundary, entries, node.nw, node.ne, node.sw, node.se)
     }
   }
 }

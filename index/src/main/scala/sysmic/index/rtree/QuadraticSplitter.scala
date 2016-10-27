@@ -14,7 +14,9 @@
 
 package sysmic.index.rtree
 
+import sysmic.geometry.GeometryUtil._
 import sysmic.index.rtree.RTree._
+
 
 /**
   * Created by bchapuis on 02/04/16.
@@ -35,21 +37,17 @@ class QuadraticSplitter(M: Int, m: Int) extends Splitter {
     (ss1, ss2)
   }
 
-  private[rtree] def pickSeeds(
-      entries: List[Entry]): (List[Entry], List[Entry], List[Entry]) = {
+  private[rtree] def pickSeeds(entries: List[Entry]): (List[Entry], List[Entry], List[Entry]) = {
     val (s1, s2) = entries
       .flatMap(e1 => entries.map(e2 => (e1, e2)))
       .maxBy(p => {
         val j = wrap(List(p._1, p._2))
-        j.size - p._1.mbb.size - p._2.mbb.size
+        bboxArea(j) - bboxArea(p._1.bbox) - bboxArea(p._2.bbox)
       })
     (List(s1), List(s2), entries.diff(List(s1, s2)))
   }
 
-  private[rtree] def split(
-      g1: List[Entry],
-      g2: List[Entry],
-      entries: List[Entry]): (List[Entry], List[Entry], List[Entry]) = {
+  private[rtree] def split(g1: List[Entry], g2: List[Entry], entries: List[Entry]): (List[Entry], List[Entry], List[Entry]) = {
     if (entries.isEmpty) {
       (g1, g2, entries)
     } else if (g1.size + entries.size == m) {
@@ -58,10 +56,10 @@ class QuadraticSplitter(M: Int, m: Int) extends Splitter {
       (g1, g2 ++ entries, entries)
     } else {
       val (entry, remaining) = pickNext(g1, g2, entries)
-      val a1 = wrap(g1).size
-      val a2 = wrap(g2).size
-      val c1 = wrap(entry :: g1).size - a1
-      val c2 = wrap(entry :: g2).size - a2
+      val a1 = bboxArea(wrap(g1))
+      val a2 = bboxArea(wrap(g2))
+      val c1 = bboxArea(wrap(entry :: g1)) - a1
+      val c2 = bboxArea(wrap(entry :: g2)) - a2
       if (c1 < c2) {
         split(entry :: g1, g2, remaining)
       } else if (c2 < c1) {
@@ -78,12 +76,10 @@ class QuadraticSplitter(M: Int, m: Int) extends Splitter {
     }
   }
 
-  private[rtree] def pickNext(g1: List[Entry],
-                              g2: List[Entry],
-                              entries: List[Entry]): (Entry, List[Entry]) = {
+  private[rtree] def pickNext(g1: List[Entry], g2: List[Entry], entries: List[Entry]): (Entry, List[Entry]) = {
     val entry = entries.maxBy(entry => {
-      val d1 = wrap(entry :: g1).size - wrap(g1).size
-      val d2 = wrap(entry :: g2).size - wrap(g2).size
+      val d1 = bboxArea(wrap(entry :: g1)) - bboxArea(wrap(g1))
+      val d2 = bboxArea(wrap(entry :: g2)) - bboxArea(wrap(g2))
       Math.abs(d2 - d1)
     })
     (entry, entries.diff(List(entry)))

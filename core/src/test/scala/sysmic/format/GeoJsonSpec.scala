@@ -14,8 +14,8 @@
 
 package sysmic.format
 
-import sysmic.geometry._
 import org.scalatest.FunSpec
+import sysmic.geometry._
 
 class GeoJsonSpec extends FunSpec {
 
@@ -27,7 +27,8 @@ class GeoJsonSpec extends FunSpec {
   val multiPoint = MultiPoint(List(Point(1.1,1.1), Point(2.2,2.2)))
   val multiLineString = MultiLineString(List(LineString(List(Point(1.1,1.1), Point(2.2,2.2))), LineString(List(Point(1.1,1.1), Point(2.2,2.2)))))
   val multiPolygon = MultiPolygon(List(Polygon(List(Point(1.1,1.1), Point(2.2,2.2))), Polygon(List(Point(1.1,1.1), Point(2.2,2.2)))))
-  val feature = Feature(point, Map("k" -> "v"), Some("id"))
+  val properties = Map("string" -> "string", "int" -> 1, "double" -> 1.0, "long" -> 1l, "boolean" -> true)
+  val feature = Feature(Some("id"), point, properties)
   val featureCollection = FeatureCollection(List(feature, feature))
 
   describe("GeoJson Format") {

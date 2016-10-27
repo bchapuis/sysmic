@@ -2,14 +2,13 @@ package sysmic.format
 
 import sysmic.geometry._
 import sysmic.protobuf.Geobuf
-
 import sysmic.protobuf.Geobuf.Data.DataTypeCase._
 import sysmic.protobuf.Geobuf.Data.Value.ValueTypeCase._
 import sysmic.protobuf.Geobuf.Data.Geometry.Type._
 
 import scala.collection.JavaConversions._
 
-object GeoBuf extends Format[Array[Byte]] {
+object GeoBuf extends Format[Array[Byte], SpatialData] {
 
   val precision = 1e6.toInt
 
@@ -93,7 +92,7 @@ object GeoBuf extends Format[Array[Byte]] {
       }
       (k, v)
     }
-    Feature(decodeGeometry(geometry), map.toMap, id)
+    Feature(id, decodeGeometry(geometry), map.toMap)
   }
 
   def decodeFeatureCollection(data:Geobuf.Data):FeatureCollection = {
@@ -103,7 +102,7 @@ object GeoBuf extends Format[Array[Byte]] {
     FeatureCollection(features)
   }
 
-  override def decode(bytes:Array[Byte]):Data = {
+  override def decode(bytes:Array[Byte]):SpatialData = {
     val data = Geobuf.Data.parseFrom(bytes)
     val index = data.getKeysList
     data.getDataTypeCase match {
@@ -249,13 +248,13 @@ object GeoBuf extends Format[Array[Byte]] {
       .build()
   }
 
-  def encodeData(data: Data):Geobuf.Data = data match {
+  def encodeData(data: SpatialData):Geobuf.Data = data match {
     case geometry:Geometry => encodeGeometryData(geometry)
     case feature:Feature => encodeFeatureData(feature)
     case featureCollection:FeatureCollection => encodeFeatureCollectionData(featureCollection)
   }
 
-  def encode(data: Data): Array[Byte] = {
+  def encode(data: SpatialData): Array[Byte] = {
     encodeData(data).toByteArray
   }
 
