@@ -51,8 +51,6 @@ class QuadTreeBenchmark {
     for (geometry <- geometries) {
       tree = tree.insert(geometry._1, geometry._2)
     }
-
-    //geometries.foldLeft(new BBoxQuadTree[Int](Node[BBox, Int](BBox(Point(0,0), Point(w, h)))))((t, g) => t.insert(g._1, g._2))
   }
 
   @Benchmark

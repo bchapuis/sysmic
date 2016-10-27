@@ -27,24 +27,14 @@ import sysmic.index.quadtree.QuadTree._
   */
 object QuadTreeViewer {
 
-  def draw(file: String,
-           width: Int,
-           height: Int,
-           tree: QuadTree[_, _],
-           query: BBox,
-           selection: List[Entry[_, _]]): Unit = {
+  def draw(file: String, width: Int, height: Int, tree: QuadTree[_, _], query: BBox, selection: List[Entry[_, _]]): Unit = {
     val bi = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
     val g = bi.createGraphics()
     drawShapes(g, Some(tree.root))
     drawTree(g, Some(tree.root))
     drawSelection(g, selection)
-
     g.setPaint(Color.RED)
-    g.drawRect(query.p1.x.toInt,
-               query.p1.y.toInt,
-               query.width.toInt,
-               query.height.toInt)
-
+    g.drawRect(query.p1.x.toInt, query.p1.y.toInt, query.width.toInt, query.height.toInt)
     val f = new File(file)
     ImageIO.write(bi, "png", f)
   }
