@@ -6,7 +6,7 @@ import scala.math._
   * Sources:
   * - http://janmatuschek.de/LatitudeLongitudeBoundingCoordinates#PolesAnd180thMeridian
   */
-class SphericalGeometry(R:Double) {
+class SphericalGeometryUtil(R:Double) {
 
   val MinLat = -90d
   val MaxLat = 90d
@@ -63,26 +63,26 @@ class SphericalGeometry(R:Double) {
 
 }
 
-object SunGeometry extends SphericalGeometry(695700e3)
+object SunGeometryUtil extends SphericalGeometryUtil(695700e3)
 
-object EarthGeometry extends SphericalGeometry(6371e3)
+object EarthGeometryUtil extends SphericalGeometryUtil(6371e3)
 
-object MoonGeometry extends SphericalGeometry(1737e3)
+object MoonGeometryUtil extends SphericalGeometryUtil(1737e3)
 
-object JupiterGeometry extends SphericalGeometry(69911e3)
+object JupiterGeometryUtil extends SphericalGeometryUtil(69911e3)
 
-object MercuryGeometry extends SphericalGeometry(2440e3)
+object MercuryGeometryUtil extends SphericalGeometryUtil(2440e3)
 
-object MarsGeometry extends SphericalGeometry(3390e3)
+object MarsGeometryUtil extends SphericalGeometryUtil(3390e3)
 
-object PlutoGeometry extends SphericalGeometry(1187e3)
+object PlutoGeometryUtil extends SphericalGeometryUtil(1187e3)
 
-object SaturnGeometry extends SphericalGeometry(58232e3)
+object SaturnGeometryUtil extends SphericalGeometryUtil(58232e3)
 
-object TitanGeometry extends SphericalGeometry(2576e3)
+object TitanGeometryUtil extends SphericalGeometryUtil(2576e3)
 
-object VenusGeometry extends SphericalGeometry(6052e3)
+object VenusGeometryUtil extends SphericalGeometryUtil(6052e3)
 
-object NeptuneGeometry extends SphericalGeometry(24622e3)
+object NeptuneGeometryUtil extends SphericalGeometryUtil(24622e3)
 
-object UranusGeometry extends SphericalGeometry(25362e3)
+object UranusGeometryUtil extends SphericalGeometryUtil(25362e3)

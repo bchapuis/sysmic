@@ -14,7 +14,7 @@
 
 package sysmic.algorithm
 
-import sysmic.geometry.EuclideanGeometry._
+import sysmic.geometry.EuclideanGeometryUtil._
 import sysmic.geometry.{Geometry, Point}
 
 /**

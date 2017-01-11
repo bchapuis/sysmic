@@ -36,6 +36,7 @@ trait Geometry extends SpatialData
   * @param x
   * @param y
   */
+@SerialVersionUID(1L)
 case class Point(x:Double, y:Double) extends Geometry {
   override def bbox(): BBox = BBox(this, this)
 }
@@ -46,6 +47,7 @@ case class Point(x:Double, y:Double) extends Geometry {
   *
   * @param points
   */
+@SerialVersionUID(1L)
 case class MultiPoint(points:List[Point]) extends Geometry {
   override def bbox(): BBox = SpatialDataUtil.pointsBBox(points)
 }
@@ -55,6 +57,7 @@ case class MultiPoint(points:List[Point]) extends Geometry {
   *
   * @param points
   */
+@SerialVersionUID(1L)
 case class LineString(points:List[Point]) extends Geometry {
   override def bbox(): BBox = SpatialDataUtil.pointsBBox(points)
 }
@@ -64,6 +67,7 @@ case class LineString(points:List[Point]) extends Geometry {
   *
   * @param lines
   */
+@SerialVersionUID(1L)
 case class MultiLineString(lines:List[LineString]) extends Geometry {
   override def bbox(): BBox = SpatialDataUtil.spatialDataBBox(lines)
 }
@@ -73,6 +77,7 @@ case class MultiLineString(lines:List[LineString]) extends Geometry {
   *
   * @param points
   */
+@SerialVersionUID(1L)
 case class Polygon(points:List[Point]) extends Geometry {
   override def bbox(): BBox = SpatialDataUtil.pointsBBox(points)
 }
@@ -82,6 +87,7 @@ case class Polygon(points:List[Point]) extends Geometry {
   *
   * @param polygons
   */
+@SerialVersionUID(1L)
 case class MultiPolygon(polygons:List[Polygon]) extends Geometry {
   override def bbox(): BBox = SpatialDataUtil.spatialDataBBox(polygons)
 }
@@ -92,6 +98,7 @@ case class MultiPolygon(polygons:List[Polygon]) extends Geometry {
   *
   * @param geometries
   */
+@SerialVersionUID(1L)
 case class GeometryCollection(geometries:List[Geometry]) extends Geometry {
   override def bbox(): BBox = SpatialDataUtil.spatialDataBBox(geometries)
 }
@@ -103,6 +110,7 @@ case class GeometryCollection(geometries:List[Geometry]) extends Geometry {
   * @param geometry
   * @param properties
   */
+@SerialVersionUID(1L)
 case class Feature(id:Option[String], geometry: Geometry, properties:Map[String, Any]) extends SpatialData {
   override def bbox(): BBox = geometry.bbox()
 }
@@ -112,6 +120,7 @@ case class Feature(id:Option[String], geometry: Geometry, properties:Map[String,
   *
   * @param features
   */
+@SerialVersionUID(1L)
 case class FeatureCollection(features:List[Feature]) extends SpatialData {
   override def bbox(): BBox = SpatialDataUtil.spatialDataBBox(features)
 }
@@ -122,6 +131,7 @@ case class FeatureCollection(features:List[Feature]) extends SpatialData {
   * @param p1
   * @param p2
   */
+@SerialVersionUID(1L)
 case class BBox(p1:Point, p2:Point) {
 
   require(p1.x <= p2.x, s"${p1.x} must be smaller or equal to ${p2.x}")

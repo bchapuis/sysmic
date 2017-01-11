@@ -23,13 +23,13 @@ class SpatialGeometrySpec extends FunSpec {
     it("must accurately compute distances") {
       val statuteOfLiberty = Point(-74.0444, 40.6892)
       val eiffelTower = Point(2.2945, 48.8583)
-      assert(EarthGeometry.distance(statuteOfLiberty, eiffelTower) == 5837413.155831484)
+      assert(EarthGeometryUtil.distance(statuteOfLiberty, eiffelTower) == 5837413.155831484)
     }
 
     it("must accurately compute bounding boxes") {
       val d = 1000e3
       val M = Point(-39.998183678082775,80.00209693411685)
-      assert(EarthGeometry.boundingBox(M, d) == BBox(Point(-104.20671955633055,71.00888087492955),Point(24.210352200164998,88.99531299330417)))
+      assert(EarthGeometryUtil.boundingBox(M, d) == BBox(Point(-104.20671955633055,71.00888087492955),Point(24.210352200164998,88.99531299330417)))
     }
 
   }

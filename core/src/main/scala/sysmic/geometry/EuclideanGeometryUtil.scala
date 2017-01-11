@@ -1,6 +1,6 @@
 package sysmic.geometry
 
-object EuclideanGeometry {
+object EuclideanGeometryUtil {
 
   def cross(a:Point, b:Point):Double = {
     a.x * b.y - a.y * b.x
@@ -147,9 +147,9 @@ object EuclideanGeometry {
 
   implicit class EuclideanPoint(a:Point) {
 
-    def +(b:Point) = EuclideanGeometry.add(a, b)
+    def +(b:Point) = EuclideanGeometryUtil.add(a, b)
 
-    def -(b:Point) = EuclideanGeometry.subtract(a, b)
+    def -(b:Point) = EuclideanGeometryUtil.subtract(a, b)
 
   }
 

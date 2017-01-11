@@ -16,7 +16,7 @@ package sysmic.algorithm
 
 import java.util
 
-import sysmic.geometry.{EuclideanGeometry, Point}
+import sysmic.geometry.{EuclideanGeometryUtil, Point}
 
 /**
   * The GrahamScan helper object provides methods for computing the
@@ -29,7 +29,7 @@ import sysmic.geometry.{EuclideanGeometry, Point}
   */
 object GrahamScan {
 
-  import EuclideanGeometry._
+  import EuclideanGeometryUtil._
 
   // Scan the List of coordinates and find our vertices
   private def scan(points: List[Point]): List[Point] = points match {
@@ -47,7 +47,7 @@ object GrahamScan {
     // (the angle between the line defined by the origin and the current point, and the x-axis)
     val coordList = origin :: points
       .filterNot(_ == origin)
-      .sorted(EuclideanGeometry.atan2Ordering(origin))
+      .sorted(EuclideanGeometryUtil.atan2Ordering(origin))
 
     // Do the Graham scan
     scan(coordList)

@@ -59,15 +59,14 @@ object QuadTreeViewer {
   }
 
   def drawSelection(g: Graphics2D, selection: List[Entry[_, _]]) = {
-    selection.foreach(e =>
-          e.key match {
-        case p: Point =>
-          g.setPaint(Color.GREEN)
-          g.drawOval(p.x.toInt, p.y.toInt, 3, 3)
-        case r: BBox =>
-          g.setPaint(Color.GREEN)
-          g.drawRect(r.p1.x.toInt, r.p1.y.toInt, r.width.toInt, r.height.toInt)
-        case _ =>
+    selection.foreach(e => e.key match {
+      case p: Point =>
+        g.setPaint(Color.GREEN)
+        g.drawOval(p.x.toInt, p.y.toInt, 3, 3)
+      case r: BBox =>
+        g.setPaint(Color.GREEN)
+        g.drawRect(r.p1.x.toInt, r.p1.y.toInt, r.width.toInt, r.height.toInt)
+      case _ =>
     })
   }
 

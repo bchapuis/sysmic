@@ -21,7 +21,9 @@ import sysmic.index.rtree.RTree._
 import scala.runtime.ScalaRunTime
 
 trait Splitter {
+
   def split(entries: List[Entry]): (List[Entry], List[Entry])
+
 }
 
 object RTree {
@@ -31,32 +33,6 @@ object RTree {
   case class Entry(bbox: BBox, value: Any) {
     override lazy val hashCode = ScalaRunTime._hashCode(this)
   }
-
-//  case class BBox(val p1.x: Double, val p1.y: Double, val p2.x: Double, val p2.y: Double) {
-//
-//    assert(p1.x <= p2.x)
-//    assert(p1.y <= p2.y)
-//
-//    lazy val width = p2.x - p1.x
-//    lazy val height = p2.x - p1.x
-//
-//    lazy val size = width * height
-//
-//    def contains(bbox: BBox): Boolean = {
-//      p1.x <= bbox.p1.x &&
-//      p2.x >= bbox.p2.x &&
-//      p1.y <= bbox.p1.y &&
-//      p2.y >= bbox.p2.y
-//    }
-//
-//    def overlap(bbox: BBox): Boolean = {
-//      p1.x <= bbox.p2.x &&
-//      p2.x >= bbox.p1.x &&
-//      p1.y <= bbox.p2.y &&
-//      p2.y >= bbox.p1.y
-//    }
-//
-//  }
 
   def wrap(entries: List[Entry]): BBox = {
     val minX = entries.map(_.bbox.p1.x).min

@@ -19,24 +19,19 @@ package sysmic.geohash
   *
   * Source: https://github.com/Factual/beercode-open
   */
-case class GeoHash(val hash:Long,
-                   val bits:Int,
-                   val lat:Double,
-                   val lng:Double,
-                   val latError:Double,
-                   val lngError:Double) {
+case class GeoHash(hash:Long, bits:Int, lat:Double, lng:Double, latError:Double, lngError:Double) {
 
   def base32 = GeoHash.toBase32(hash, bits)
 
-  def minLat = lat - latError
-  def maxLat = lat + latError
-  def minLng = lng - lngError
-  def maxLng = lng + lngError
+  def minLat:Double = lat - latError
+  def maxLat:Double = lat + latError
+  def minLng:Double = lng - lngError
+  def maxLng:Double = lng + lngError
 
-  def north = GeoHash.fromLong(GeoHash.north(hash))
-  def east  = GeoHash.fromLong(GeoHash.east (hash))
-  def south = GeoHash.fromLong(GeoHash.south(hash))
-  def west  = GeoHash.fromLong(GeoHash.west (hash))
+  def north:GeoHash = GeoHash.fromLong(GeoHash.north(hash))
+  def east: GeoHash  = GeoHash.fromLong(GeoHash.east(hash))
+  def south:GeoHash = GeoHash.fromLong(GeoHash.south(hash))
+  def west: GeoHash  = GeoHash.fromLong(GeoHash.west(hash))
 
 }
 

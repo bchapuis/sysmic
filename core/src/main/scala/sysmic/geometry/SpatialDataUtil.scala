@@ -53,8 +53,6 @@ object SpatialDataUtil {
     pointsBBox(points)
   }
 
-  
-  
   def polygonContains(polygon: Polygon, point:Point):Boolean = {
     // http://stackoverflow.com/questions/217578/how-can-i-determine-whether-a-2d-point-is-within-a-polygon
     // https://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html#Explanation

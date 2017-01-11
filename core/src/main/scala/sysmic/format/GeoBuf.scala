@@ -125,52 +125,46 @@ object GeoBuf extends Format[Array[Byte], SpatialData] {
     points.foldLeft(builder)((b, p) => encodeCoords(b, p))
   }
 
-  def encodePoint(point:Point):Geobuf.Data.Geometry = {
+  def encodePoint(point:Point):Geobuf.Data.Geometry.Builder = {
     val builder = Geobuf.Data.Geometry.newBuilder()
     encodeCoords(builder, point)
       .setType(POINT)
-      .build()
   }
 
-  def encodeLineString(lineString:LineString):Geobuf.Data.Geometry = {
+  def encodeLineString(lineString:LineString):Geobuf.Data.Geometry.Builder = {
     val builder = Geobuf.Data.Geometry.newBuilder()
     encodeCoords(builder, lineString.points)
       .setType(LINESTRING)
-      .build()
   }
 
-  def encodePolygon(polygon:Polygon):Geobuf.Data.Geometry = {
+  def encodePolygon(polygon:Polygon):Geobuf.Data.Geometry.Builder = {
     val builder = Geobuf.Data.Geometry.newBuilder()
     encodeCoords(builder, polygon.points)
       .setType(POLYGON)
-      .build()
   }
 
-  def encodeMultiPoint(multiPoint:MultiPoint):Geobuf.Data.Geometry = {
-    val geometries = multiPoint.points.map(point => encodePoint(point))
+  def encodeMultiPoint(multiPoint:MultiPoint):Geobuf.Data.Geometry.Builder = {
+    val geometries = multiPoint.points.map(point => encodePoint(point).build())
     Geobuf.Data.Geometry.newBuilder()
       .setType(MULTIPOINT)
       .addAllGeometries(geometries)
-      .build()
   }
 
-  def encodeMultiLineString(multiLineString:MultiLineString):Geobuf.Data.Geometry = {
-    val geometries = multiLineString.lines.map(line => encodeLineString(line))
+  def encodeMultiLineString(multiLineString:MultiLineString):Geobuf.Data.Geometry.Builder = {
+    val geometries = multiLineString.lines.map(line => encodeLineString(line).build())
     Geobuf.Data.Geometry.newBuilder()
       .setType(MULTILINESTRING)
       .addAllGeometries(geometries)
-      .build()
   }
 
-  def encodeMultiPolygon(multiLineString:MultiPolygon):Geobuf.Data.Geometry = {
-    val geometries = multiLineString.polygons.map(polygon => encodePolygon(polygon))
+  def encodeMultiPolygon(multiLineString:MultiPolygon):Geobuf.Data.Geometry.Builder = {
+    val geometries = multiLineString.polygons.map(polygon => encodePolygon(polygon).build())
     Geobuf.Data.Geometry.newBuilder()
       .setType(MULTIPOLYGON)
       .addAllGeometries(geometries)
-      .build()
   }
 
-  def encodeGeometry(geometry:Geometry):Geobuf.Data.Geometry = geometry match {
+  def encodeGeometry(geometry:Geometry):Geobuf.Data.Geometry.Builder = geometry match {
     case point:Point => encodePoint(point)
     case lineString:LineString => encodeLineString(lineString)
     case polygon:Polygon => encodePolygon(polygon)
@@ -179,11 +173,10 @@ object GeoBuf extends Format[Array[Byte], SpatialData] {
     case multiPolygon:MultiPolygon => encodeMultiPolygon(multiPolygon)
   }
 
-  def encodeGeometryData(geometry:Geometry):Geobuf.Data = {
+  def encodeGeometryData(geometry:Geometry):Geobuf.Data.Builder = {
     Geobuf.Data.newBuilder()
       .setPrecision(precision)
       .setGeometry(encodeGeometry(geometry))
-      .build()
   }
 
   def encodeProperty(builder:Geobuf.Data.Feature.Builder, index:Map[String, Int], key:String, value:Any):Geobuf.Data.Feature.Builder = {
@@ -222,14 +215,13 @@ object GeoBuf extends Format[Array[Byte], SpatialData] {
       .build()
   }
 
-  def encodeFeatureData(feature:Feature):Geobuf.Data = {
+  def encodeFeatureData(feature:Feature):Geobuf.Data.Builder = {
     val keys = feature.properties.map(_._1).toSet
     val index = keys.zipWithIndex.toMap
     Geobuf.Data.newBuilder()
       .addAllKeys(index.keySet)
       .setPrecision(precision)
       .setFeature(encodeFeature(index, feature))
-      .build()
   }
 
   def encodeFeatureCollection(index:Map[String, Int], features:List[Feature]):Geobuf.Data.FeatureCollection = {
@@ -238,24 +230,23 @@ object GeoBuf extends Format[Array[Byte], SpatialData] {
       .build()
   }
 
-  def encodeFeatureCollectionData(featureCollection: FeatureCollection):Geobuf.Data = {
+  def encodeFeatureCollectionData(featureCollection: FeatureCollection):Geobuf.Data.Builder = {
     val keys = featureCollection.features.flatMap(_.properties.map(_._1)).toSet
     val index = keys.zipWithIndex.toMap
     Geobuf.Data.newBuilder()
       .setPrecision(precision)
       .addAllKeys(index.keySet)
       .setFeatureCollection(encodeFeatureCollection(index, featureCollection.features))
-      .build()
   }
 
-  def encodeData(data: SpatialData):Geobuf.Data = data match {
+  def encodeData(data: SpatialData):Geobuf.Data.Builder = data match {
     case geometry:Geometry => encodeGeometryData(geometry)
     case feature:Feature => encodeFeatureData(feature)
     case featureCollection:FeatureCollection => encodeFeatureCollectionData(featureCollection)
   }
 
   def encode(data: SpatialData): Array[Byte] = {
-    encodeData(data).toByteArray
+    encodeData(data).build().toByteArray()
   }
 
 }
